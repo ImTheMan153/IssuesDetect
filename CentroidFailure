@@ -1006,7 +1006,23 @@ if( flags & OVERLAY_BOX )
     // Draw bounding box overlays once for all detections
     if( CUDA_FAILED(cudaDetectionOverlay(input, output, width, height, format, detections, numDetections, mClassColors)) )
         return false;
+
+    // Then iterate over each detection to draw the centroid circles
+    for( int n=0; n < numDetections; n++ )
+    {
+        const Detection* d = detections + n;
+        
+        // Calculate the center coordinates for the current detection
+        int cx = (d->Left + d->Right) / 2;
+        int cy = (d->Top + d->Bottom) / 2;
+        float radius = 12.5f; // Adjust the radius as needed
+
+        // Draw the centroid circle for the current detection
+        if( CUDA_FAILED(cudaDrawCircle(input, output, width, height, format, cx, cy, radius, customColor)) )
+            return false;
+    }
 }
+
 
 	
 	// bounding box lines
@@ -1023,16 +1039,6 @@ if( flags & OVERLAY_BOX )
 		    CUDA(cudaDrawLine(input, output, width, height, format, d->Left, d->Bottom, d->Right, d->Bottom, color, mLineWidth));
 			CUDA(cudaDrawLine(input, output, width, height, format, d->Left, d->Top, d->Left, d->Bottom, color, mLineWidth));
         
-            // Calculate the center coordinates for the current detection
-            int cx = (d->Left + d->Right) / 2;
-            int cy = (d->Top + d->Bottom) / 2;
-            float radius = 12.5f; // Adjust the radius as needed
-
-            // Draw the centroid circle for the current detection
-            if( CUDA_FAILED(cudaDrawCircle(input, output, width, height, format, cx, cy, radius, customColor)) )
-                return false;
-    
-
 		}
 	}
 			
